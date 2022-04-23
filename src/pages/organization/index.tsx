@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {useRef, useState} from 'react';
-import {Direction, getRepos, RepoType, SortType} from './../../api/organization';
+import * as OrganizationAPI from '../../api/OrganizationAPI';
 
 const Organization: React.FC = () => {
   const [repoData, setRepoData] = useState([]);
@@ -12,7 +12,7 @@ const Organization: React.FC = () => {
   const handleSearchButtonClick = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
     const orgName: string = searchInput.current ? searchInput.current.value : '';
-    getRepos(orgName, {
+    OrganizationAPI.getRepos(orgName, {
       type: repoTypeSelect.current.value,
       sort: sortTypeSelect.current.value,
       direction: directionSelect.current.value,
@@ -29,21 +29,21 @@ const Organization: React.FC = () => {
         <input ref={searchInput} defaultValue={'github'}></input>
         <select ref={repoTypeSelect}>
           {
-            Object.values(RepoType).map((value, index)=>(
+            Object.values(OrganizationAPI.RepoType).map((value, index)=>(
               <option key={index} value={value}>{value}</option>
             ))
           }
         </select>
         <select ref={sortTypeSelect}>
           {
-            Object.values(SortType).map((value, index)=>(
+            Object.values(OrganizationAPI.SortType).map((value, index)=>(
               <option key={index} value={value}>{value}</option>
             ))
           }
         </select>
         <select ref={directionSelect}>
           {
-            Object.values(Direction).map((value, index)=>(
+            Object.values(OrganizationAPI.Direction).map((value, index)=>(
               <option key={index} value={value}>{value}</option>
             ))
           }
