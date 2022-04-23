@@ -1,9 +1,9 @@
 import * as React from 'react';
 import {useRef, useState} from 'react';
-import * as OrganizationAPI from '../../api/OrganizationAPI';
+import * as OrganizationAPI from './../../api/OrganizationAPI';
 
 const Organization: React.FC = () => {
-  const [repoData, setRepoData] = useState([]);
+  const [repoData, setRepoData] = useState<Array<IRepoData>>([]);
   const searchInput = useRef<HTMLInputElement>();
   const repoTypeSelect = useRef<HTMLSelectElement>();
   const sortTypeSelect = useRef<HTMLSelectElement>();
@@ -18,11 +18,20 @@ const Organization: React.FC = () => {
       direction: directionSelect.current.value,
     }).then((response) => {
       return response.json();
-    }).then((jsonData) => {
-      setRepoData(jsonData);
-      console.log(jsonData);
+    }).then((responseJson) => {
+      const responseData: OrganizationAPI.IGetReposResponseData =
+       responseJson as OrganizationAPI.IGetReposResponseData;
+
+      const repoDataList: Array<IRepoData> = responseData.map((data)=>({
+        name: data.name,
+        description: data.description,
+        url: data.html_url,
+      }));
+      setRepoData(repoDataList);
+      console.log(responseData);
     });
   };
+
   return (
     <div>
       <form>
@@ -51,21 +60,30 @@ const Organization: React.FC = () => {
         <button onClick={handleSearchButtonClick}>Search</button>
       </form>
       {
-        repoData.map((data, index) => (
-          <div key={index}>
-            <h3>
-              <a href={data.html_url} >
-                {data.name}
-              </a>
-            </h3>
-            <p>
-              {data.description}
-            </p>
-          </div>
-        ))
+        repoData.map((data, index) => {
+          const ele = (
+            <div key={index}>
+              <h3>
+                <a href={data.url} >
+                  {data.name}
+                </a>
+              </h3>
+              <p>
+                {data.description}
+              </p>
+            </div>
+          );
+          return ele;
+        })
       }
     </div>
   );
 };
 
 export default Organization;
+
+interface IRepoData {
+  name: string;
+  url: string;
+  description: string;
+}
