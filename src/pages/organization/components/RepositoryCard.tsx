@@ -1,10 +1,9 @@
 import * as React from 'react';
-import {FC} from 'react';
 
-const RepositoryCard: FC<IRepositoryCardProps> = (props) => {
+const RepositoryCard: React.ForwardRefRenderFunction<HTMLDivElement, IRepositoryCardProps> = (props, ref) => {
   const {name, url, description, ...others} = props;
   return (
-    <div {...others}>
+    <div ref={ref} {...others}>
       <h3>
         <a href={url} >
           {name}
@@ -17,7 +16,7 @@ const RepositoryCard: FC<IRepositoryCardProps> = (props) => {
   );
 };
 
-export default RepositoryCard;
+export default React.forwardRef(RepositoryCard);
 
 export interface IRepositoryCardProps {
   name: string;
