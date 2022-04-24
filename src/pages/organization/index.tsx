@@ -1,27 +1,30 @@
 import * as React from 'react';
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useState} from 'react';
 import * as OrganizationAPI from './../../api/OrganizationAPI';
-import RepositoryCard, {IRepositoryCardProps} from './components/RepositoryCard';
+import RepositoryCardList from './components/RepositoryCardList';
+import {IRepositoryData} from './../../interfaces/repository';
 
+const DEFAULT_SEARCH_ORG_NAME: string = 'github';
 const PAGES_PER_LOAD: number = 20;
 
 const Organization: React.FC = () => {
-  const [repoData, setRepoData] = useState<Array<IRepositoryCardProps>>([]);
+  const [repoListData, setRepoListData] = useState<Array<IRepositoryData>>([]);
   const [currentPage, setCurrentPage] = useState<number>(0);
-  const [orgName, setOrgName] = useState<string>('github');
 
-  const [searchString, setSearchString] = useState('github');
+  const [orgName, setOrgName] = useState<string>(DEFAULT_SEARCH_ORG_NAME);
+  const [searchString, setSearchString] = useState(DEFAULT_SEARCH_ORG_NAME);
   const [repoType, setRepoType] = useState<string>(OrganizationAPI.RepoType.ALL);
   const [sortType, setSortType] = useState<string>(OrganizationAPI.SortType.CREATED);
   const [direction, setDirection] = useState<string>(OrganizationAPI.Direction.ASC);
 
-  const lastRepoCard = useRef<HTMLDivElement>();
+  const [isDataFetching, setIsDataFetching] = useState<boolean>(false);
+  const [isTryingLoodMore, setIsTryingLoodMore] = useState<boolean>(false);
+  const [isOrgHasMoreRepo, setIsOrgHasMoreRepo] = useState<boolean>(true);
 
+  /** Effect for load first page. */
   useEffect(()=>{
-    setRepoData([]);
-    setCurrentPage(0);
-
     const fetchData = async () => {
+      setIsDataFetching(true);
       const response: Response = await OrganizationAPI.getRepos(orgName, {
         type: repoType,
         sort: sortType,
@@ -29,46 +32,30 @@ const Organization: React.FC = () => {
         perPage: PAGES_PER_LOAD,
         page: 1,
       });
-      if (response.ok) {
+      setIsDataFetching(false);
+      if (response) {
         const jsonData: any = await response.json();
-        processResponseData([], jsonData);
+        setCurrentPage(1);
+        const formatData = getFormatGetRepoAPIResponse(jsonData);
+        setRepoListData(formatData);
+        if (formatData.length < PAGES_PER_LOAD || formatData.length === 0) {
+          setIsOrgHasMoreRepo(false);
+        } else {
+          setIsOrgHasMoreRepo(true);
+        }
       } else {
-        processResponseData([], []);
+        setRepoListData([]);
       }
     };
     fetchData();
   }, [orgName, repoType, sortType, direction]);
 
-
-  const observerOptions: IntersectionObserverInit = {
-    threshold: 0,
-  };
-
-  const [hasMoreRepo, setHasMoreRepo] = useState<boolean>(true);
-
-  const processResponseData =
-  (lastData: Array<IRepositoryCardProps>, responseData: OrganizationAPI.IGetReposResponseData) => {
-    setCurrentPage(currentPage + 1);
-
-    const repoDataList: Array<IRepositoryCardProps> = responseData.map((data)=>({
-      name: data.name,
-      description: data.description,
-      url: data.html_url,
-    }));
-    setRepoData([...lastData, ...repoDataList]);
-    console.log(responseData);
-
-    if (responseData.length < PAGES_PER_LOAD || responseData.length === 0) {
-      setHasMoreRepo(false);
-    } else {
-      setHasMoreRepo(true);
-    }
-  };
-
-  const observerCallback: IntersectionObserverCallback = (entries, observer)=>{
-    entries.forEach((entrie)=>{
-      if (entrie.isIntersecting) {
+  /** Effect for load more page. */
+  useEffect(()=>{
+    if (isTryingLoodMore && isOrgHasMoreRepo) {
+      if (!isDataFetching ) {
         const fetchData = async () => {
+          setIsDataFetching(true);
           const response: Response = await OrganizationAPI.getRepos(orgName, {
             type: repoType,
             sort: sortType,
@@ -76,29 +63,52 @@ const Organization: React.FC = () => {
             perPage: PAGES_PER_LOAD,
             page: currentPage + 1,
           });
-          const jsonData: any = await response.json();
-          processResponseData(repoData, jsonData);
+          setIsDataFetching(false);
+          if (response) {
+            const jsonData: any = await response.json();
+            setCurrentPage(currentPage + 1);
+            const formatData = getFormatGetRepoAPIResponse(jsonData);
+            setRepoListData([...repoListData, ...formatData]);
+            if (formatData.length < PAGES_PER_LOAD || formatData.length === 0) {
+              setIsOrgHasMoreRepo(false);
+            } else {
+              setIsOrgHasMoreRepo(true);
+            }
+          } else {
+            setRepoListData([]);
+          }
         };
         fetchData();
-        observer.unobserve(lastRepoCard.current);
-      }
-    });
-  };
-
-  useEffect(()=>{
-    if (hasMoreRepo) {
-      const observer: IntersectionObserver = new IntersectionObserver(observerCallback, observerOptions);
-      if (lastRepoCard.current) {
-        observer.observe(lastRepoCard.current);
       }
     }
-  }, [repoData]);
+    return ()=>{
+      setIsTryingLoodMore(false);
+    };
+  // Only fetch data when isTryingLoodMore changed.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTryingLoodMore]);
 
-  const handleSearchValueChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
-    setSearchString(e.target.value);
+  const getFormatGetRepoAPIResponse = (responseData: OrganizationAPI.IGetReposResponseData) => {
+    console.log(responseData);
+    return responseData.map((data)=>({
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      url: data.html_url,
+      language: data.language?data.language: undefined,
+      licenseName: data.license?data.license.name: undefined,
+      updatedTime: new Date(data.updated_at),
+      forksCount: data.forks_count,
+      openIssuesCount: data.open_issues_count,
+      stargazersCount: data.stargazers_count,
+      topics: data.topics,
+      visibility: data.visibility,
+    } as IRepositoryData));
   };
 
+  /** Effect for search organization. */
   useEffect(()=>{
+    // Update org name after typing (delay 0.5s).
     const timer = setTimeout(()=>{
       setOrgName(searchString);
     }, 500);
@@ -107,16 +117,20 @@ const Organization: React.FC = () => {
     };
   }, [searchString]);
 
+  const handleSearchValueChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
+    setSearchString(e.target.value);
+  };
   const handleRepoTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setRepoType(e.target.value);
   };
-
   const handleSortTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortType(e.target.value);
   };
-
   const handleDirectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setDirection(e.target.value);
+  };
+  const handleLastCardIntoScreen = () => {
+    setIsTryingLoodMore(true);
   };
 
   return (
@@ -146,17 +160,7 @@ const Organization: React.FC = () => {
         </select>
       </form>
       <div>
-        {
-          repoData.map((data, index)=>(
-            <RepositoryCard
-              name={data.name}
-              description={data.description}
-              url={data.url}
-              key={index}
-              ref={lastRepoCard}
-            />
-          ))
-        }
+        <RepositoryCardList repoListData={repoListData} onLastCardIntoScreen={handleLastCardIntoScreen}/>
       </div>
     </div>
   );
