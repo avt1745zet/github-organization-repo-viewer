@@ -1,21 +1,26 @@
 import * as React from 'react';
 
 const IF: React.FC<IIFProps> = (props) => {
-  const {condition, children} = props;
-  let result: JSX.Element = null;
+  const {condition, elseComponent, children} = props;
   if (condition) {
-    result = (
+    return (
       <React.Fragment>
         {children}
       </React.Fragment>
     );
+  } else {
+    return elseComponent && (
+      <React.Fragment>
+        {elseComponent}
+      </React.Fragment>
+    );
   }
-  return result;
 };
 
 export default IF;
 
 export interface IIFProps {
     condition: boolean;
+    elseComponent?: React.ReactNode;
     children?: React.ReactNode;
 }
