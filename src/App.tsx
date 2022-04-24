@@ -1,8 +1,10 @@
 import * as React from 'react';
+import {FC} from 'react';
+import Organization from './pages/organization';
 
-const App: React.FC = () => {
+const App: FC = () => {
   return (
-    <div/>
+    <Organization/>
   );
 };
 
