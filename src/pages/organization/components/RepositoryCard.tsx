@@ -3,9 +3,9 @@ import IF from './../../../components/IF';
 
 const RepositoryCard: React.ForwardRefRenderFunction<HTMLDivElement, IRepositoryCardProps> = (props, ref) => {
   const {name, url, description, visibility, updatedTime,
-    language, forksCount, openIssuesCount, stargazersCount, ...others} = props;
+    language, forksCount, openIssuesCount, stargazersCount} = props;
   return (
-    <div ref={ref} {...others}>
+    <div ref={ref} >
       <h3>
         <a href={url} target='_blank' rel="noreferrer">
           {name}
@@ -41,9 +41,18 @@ const RepositoryCard: React.ForwardRefRenderFunction<HTMLDivElement, IRepository
   );
 };
 
-export default React.forwardRef(RepositoryCard);
+const areEqual = (prevProps: Readonly<IRepositoryCardProps>, nextProps: Readonly<IRepositoryCardProps>) => {
+  if (prevProps.id === nextProps.id) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+export default React.memo(React.forwardRef(RepositoryCard), areEqual);
 
 export interface IRepositoryCardProps {
+  id: number;
   name: string;
   url: string;
   description: string;

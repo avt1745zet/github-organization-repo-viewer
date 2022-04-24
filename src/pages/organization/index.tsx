@@ -3,16 +3,18 @@ import {useEffect, useState} from 'react';
 import * as OrganizationAPI from './../../api/OrganizationAPI';
 import RepositoryCardList from './components/RepositoryCardList';
 import {IRepositoryData} from './../../interfaces/repository';
+import IF from '../../components/IF';
 
 const DEFAULT_SEARCH_ORG_NAME: string = 'github';
 const PAGES_PER_LOAD: number = 20;
 
 const Organization: React.FC = () => {
-  const [repoListData, setRepoListData] = useState<Array<IRepositoryData>>([]);
+  const [repoListData, setRepoListData] = useState<Array<IRepositoryData>>(undefined);
+  const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [currentPage, setCurrentPage] = useState<number>(0);
 
   const [orgName, setOrgName] = useState<string>(DEFAULT_SEARCH_ORG_NAME);
-  const [searchString, setSearchString] = useState(DEFAULT_SEARCH_ORG_NAME);
+  const [searchString, setSearchString] = useState<string>(DEFAULT_SEARCH_ORG_NAME);
   const [repoType, setRepoType] = useState<string>(OrganizationAPI.RepoType.ALL);
   const [sortType, setSortType] = useState<string>(OrganizationAPI.SortType.CREATED);
   const [direction, setDirection] = useState<string>(OrganizationAPI.Direction.ASC);
@@ -23,6 +25,8 @@ const Organization: React.FC = () => {
 
   /** Effect for load first page. */
   useEffect(()=>{
+    // clear error message.
+    setErrorMessage(undefined);
     const fetchData = async () => {
       setIsDataFetching(true);
       const response: Response = await OrganizationAPI.getRepos(orgName, {
@@ -33,10 +37,10 @@ const Organization: React.FC = () => {
         page: 1,
       });
       setIsDataFetching(false);
-      if (response) {
-        const jsonData: any = await response.json();
+      if (response.ok) {
+        const jsonData: OrganizationAPI.IGetReposResponseData = await response.json();
         setCurrentPage(1);
-        const formatData = getFormatGetRepoAPIResponse(jsonData);
+        const formatData: Array<IRepositoryData> = getFormatGetRepoAPIResponse(jsonData);
         setRepoListData(formatData);
         if (formatData.length < PAGES_PER_LOAD || formatData.length === 0) {
           setIsOrgHasMoreRepo(false);
@@ -44,7 +48,9 @@ const Organization: React.FC = () => {
           setIsOrgHasMoreRepo(true);
         }
       } else {
-        setRepoListData([]);
+        const jsonData: OrganizationAPI.IGetReposErrorResponseData = await response.json();
+        setErrorMessage(jsonData.message);
+        setRepoListData(undefined);
       }
     };
     fetchData();
@@ -64,10 +70,11 @@ const Organization: React.FC = () => {
             page: currentPage + 1,
           });
           setIsDataFetching(false);
-          if (response) {
+          setIsTryingLoodMore(false);
+          if (response.ok) {
             const jsonData: any = await response.json();
             setCurrentPage(currentPage + 1);
-            const formatData = getFormatGetRepoAPIResponse(jsonData);
+            const formatData: Array<IRepositoryData> = getFormatGetRepoAPIResponse(jsonData);
             setRepoListData([...repoListData, ...formatData]);
             if (formatData.length < PAGES_PER_LOAD || formatData.length === 0) {
               setIsOrgHasMoreRepo(false);
@@ -75,15 +82,13 @@ const Organization: React.FC = () => {
               setIsOrgHasMoreRepo(true);
             }
           } else {
-            setRepoListData([]);
+            const jsonData: OrganizationAPI.IGetReposErrorResponseData = await response.json();
+            setErrorMessage(jsonData.message);
           }
         };
         fetchData();
       }
     }
-    return ()=>{
-      setIsTryingLoodMore(false);
-    };
   // Only fetch data when isTryingLoodMore changed.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTryingLoodMore]);
@@ -160,7 +165,12 @@ const Organization: React.FC = () => {
         </select>
       </form>
       <div>
-        <RepositoryCardList repoListData={repoListData} onLastCardIntoScreen={handleLastCardIntoScreen}/>
+        <IF condition={repoListData!==undefined}>
+          <RepositoryCardList repoListData={repoListData} onLastCardIntoScreen={handleLastCardIntoScreen}/>
+        </IF>
+        <IF condition={errorMessage!==undefined}>
+          <h3>{errorMessage}</h3>
+        </IF>
       </div>
     </div>
   );

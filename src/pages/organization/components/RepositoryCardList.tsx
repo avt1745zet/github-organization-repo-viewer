@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {useEffect, useRef} from 'react';
+import IF from './../../../components/IF';
 import {IRepositoryData} from './../../../interfaces/repository';
 import RepositoryCard from './RepositoryCard';
 
@@ -37,24 +38,35 @@ const RepositoryCardList: React.FC<IRepositoryCardListProps> = (props) => {
 
   return (
     <div>
-      {
-        repoListData.map((data, index)=>(
-          <RepositoryCard
-            key={index}
-            name={data.name}
-            description={data.description}
-            url={data.url}
-            visibility={data.visibility}
-            updatedTime={data.updatedTime}
-            language={data.language}
-            forksCount={data.forksCount}
-            openIssuesCount={data.openIssuesCount}
-            stargazersCount={data.stargazersCount}
-            ref={lastRepoCard}
-          />
-        ))
-      }
+      <IF condition={repoListData.length > 0} elseComponent={<EmptyMessage/>}>
+        {
+          repoListData.map((data, index)=>(
+            <RepositoryCard
+              key={index}
+              id={data.id}
+              name={data.name}
+              description={data.description}
+              url={data.url}
+              visibility={data.visibility}
+              updatedTime={data.updatedTime}
+              language={data.language}
+              forksCount={data.forksCount}
+              openIssuesCount={data.openIssuesCount}
+              stargazersCount={data.stargazersCount}
+              ref={lastRepoCard}
+            />
+          ))
+        }
+      </IF>
     </div>
+  );
+};
+
+const EmptyMessage = () => {
+  return (
+    <h3>
+        This organization doesn’t have any repositories that match.
+    </h3>
   );
 };
 

@@ -8,7 +8,9 @@ export async function getRepos(orgName: string, param?: IGetRepoParam): Promise<
     ...param && param.direction !== undefined ? {direction: param.direction} : {},
     ...param && param.perPage !== undefined ? {per_page: param.perPage.toString()} : {},
     ...param && param.page !== undefined ? {page: param.page.toString()} : {},
-  }));
+  }), {
+    method: 'GET',
+  });
 }
 
 export interface IGetRepoParam {
@@ -152,4 +154,9 @@ export interface IRepoResponseData {
     triage: boolean;
     pull: boolean;
   };
+}
+
+export interface IGetReposErrorResponseData {
+  documentation_url: string;
+  message: string;
 }
