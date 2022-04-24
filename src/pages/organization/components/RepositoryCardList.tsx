@@ -53,7 +53,7 @@ const RepositoryCardList: React.FC<IRepositoryCardListProps> = (props) => {
               forksCount={data.forksCount}
               openIssuesCount={data.openIssuesCount}
               stargazersCount={data.stargazersCount}
-              ref={lastRepoCard}
+              {...(index===repoListData.length-1)?{ref: lastRepoCard}:{}}
             />
           ))
         }

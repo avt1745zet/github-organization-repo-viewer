@@ -58,8 +58,8 @@ const Organization: React.FC = () => {
 
   /** Effect for load more page. */
   useEffect(()=>{
-    if (isTryingLoodMore && isOrgHasMoreRepo) {
-      if (!isDataFetching ) {
+    if (isTryingLoodMore) {
+      if (isOrgHasMoreRepo &&!isDataFetching ) {
         const fetchData = async () => {
           setIsDataFetching(true);
           const response: Response = await OrganizationAPI.getRepos(orgName, {
@@ -87,6 +87,8 @@ const Organization: React.FC = () => {
           }
         };
         fetchData();
+      } else {
+        setIsTryingLoodMore(false);
       }
     }
   // Only fetch data when isTryingLoodMore changed.
