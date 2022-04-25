@@ -28,7 +28,7 @@ const SelectWithLabel: React.FC<ISelectWithLabelProps> = (props) => {
 };
 
 const areEqual = (prevProps: Readonly<ISelectWithLabelProps>, nextProps: Readonly<ISelectWithLabelProps>) => {
-  return prevProps.currentOption === nextProps.currentOption;
+  return prevProps.currentOption === nextProps.currentOption && prevProps.onOptionChange === nextProps.onOptionChange;
 };
 
 export default React.memo(SelectWithLabel, areEqual);
