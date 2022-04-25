@@ -12,6 +12,14 @@ const config: webpack.Configuration = {
   plugins: [
     new HtmlWebpackPlugin({
       title: 'Github Organization Repo Viewer',
+      favicon: './public/favicon.svg',
+      meta: {
+        'description': 'A react and Github REST API practice.',
+        'keyword': 'YY, Github REST API',
+        'og:title': 'Github Organization Repo Viewer',
+        'og:description': 'A react and Github REST API practice.',
+        'og:type': 'website',
+      },
     }),
     new InjectBodyPlugin({
       content: '<div id=\"root\"></div>',
