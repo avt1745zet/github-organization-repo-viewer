@@ -107,7 +107,6 @@ const Organization: React.FC = () => {
   }, [isTryingLoadMore]);
 
   const getFormatGetRepoAPIResponse = (responseData: OrganizationAPI.IGetReposResponseData) => {
-    console.log(responseData);
     return responseData.map((data)=>({
       id: data.id,
       name: data.name,
