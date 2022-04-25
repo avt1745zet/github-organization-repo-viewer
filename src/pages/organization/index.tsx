@@ -1,38 +1,49 @@
 import * as React from 'react';
 import {useEffect, useState} from 'react';
+import {CircularProgress, Container, TextField, Typography} from '@mui/material';
 import * as OrganizationAPI from './../../api/OrganizationAPI';
-import RepositoryCardList from './components/RepositoryCardList';
 import {IRepositoryData} from './../../interfaces/repository';
-import IF from '../../components/IF';
+import IF from './../../components/IF';
+import SelectWithLabel from './../../components/SelectWithLabel';
+import RepositoryCardList from './components/RepositoryCardList';
 
 const DEFAULT_SEARCH_ORG_NAME: string = 'github';
 const PAGES_PER_LOAD: number = 20;
+
+interface ISearchQueryData {
+  orgName?: string;
+  repoType?: string;
+  sortType?: string;
+  direction?: string;
+}
 
 const Organization: React.FC = () => {
   const [repoListData, setRepoListData] = useState<Array<IRepositoryData>>(undefined);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [currentPage, setCurrentPage] = useState<number>(0);
 
-  const [orgName, setOrgName] = useState<string>(DEFAULT_SEARCH_ORG_NAME);
-  const [searchString, setSearchString] = useState<string>(DEFAULT_SEARCH_ORG_NAME);
-  const [repoType, setRepoType] = useState<string>(OrganizationAPI.RepoType.ALL);
-  const [sortType, setSortType] = useState<string>(OrganizationAPI.SortType.CREATED);
-  const [direction, setDirection] = useState<string>(OrganizationAPI.Direction.ASC);
+  const [searchQuery, setSearchQuery] = useState<ISearchQueryData>({
+    orgName: DEFAULT_SEARCH_ORG_NAME,
+    repoType: OrganizationAPI.RepoType.ALL,
+    sortType: OrganizationAPI.SortType.CREATED,
+    direction: OrganizationAPI.Direction.ASC,
+  });
 
   const [isDataFetching, setIsDataFetching] = useState<boolean>(false);
-  const [isTryingLoodMore, setIsTryingLoodMore] = useState<boolean>(false);
+  const [isTryingLoadMore, setIsTryingLoadMore] = useState<boolean>(false);
   const [isOrgHasMoreRepo, setIsOrgHasMoreRepo] = useState<boolean>(true);
 
   /** Effect for load first page. */
   useEffect(()=>{
-    // clear error message.
+    // clear error message and reset repo list.
     setErrorMessage(undefined);
+    setRepoListData(undefined);
     const fetchData = async () => {
       setIsDataFetching(true);
-      const response: Response = await OrganizationAPI.getRepos(orgName, {
-        type: repoType,
-        sort: sortType,
-        direction: direction,
+      const response: Response = await OrganizationAPI.getRepos(searchQuery.orgName, {
+        type: searchQuery.repoType,
+        sort: searchQuery.sortType,
+        direction: searchQuery.direction,
         perPage: PAGES_PER_LOAD,
         page: 1,
       });
@@ -54,23 +65,23 @@ const Organization: React.FC = () => {
       }
     };
     fetchData();
-  }, [orgName, repoType, sortType, direction]);
+  }, [searchQuery]);
 
   /** Effect for load more page. */
   useEffect(()=>{
-    if (isTryingLoodMore) {
+    if (isTryingLoadMore) {
       if (isOrgHasMoreRepo &&!isDataFetching ) {
         const fetchData = async () => {
           setIsDataFetching(true);
-          const response: Response = await OrganizationAPI.getRepos(orgName, {
-            type: repoType,
-            sort: sortType,
-            direction: direction,
+          const response: Response = await OrganizationAPI.getRepos(searchQuery.orgName, {
+            type: searchQuery.repoType,
+            sort: searchQuery.sortType,
+            direction: searchQuery.direction,
             perPage: PAGES_PER_LOAD,
             page: currentPage + 1,
           });
           setIsDataFetching(false);
-          setIsTryingLoodMore(false);
+          setIsTryingLoadMore(false);
           if (response.ok) {
             const jsonData: any = await response.json();
             setCurrentPage(currentPage + 1);
@@ -88,12 +99,12 @@ const Organization: React.FC = () => {
         };
         fetchData();
       } else {
-        setIsTryingLoodMore(false);
+        setIsTryingLoadMore(false);
       }
     }
   // Only fetch data when isTryingLoodMore changed.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTryingLoodMore]);
+  }, [isTryingLoadMore]);
 
   const getFormatGetRepoAPIResponse = (responseData: OrganizationAPI.IGetReposResponseData) => {
     console.log(responseData);
@@ -113,69 +124,144 @@ const Organization: React.FC = () => {
     } as IRepositoryData));
   };
 
-  /** Effect for search organization. */
-  useEffect(()=>{
-    // Update org name after typing (delay 0.5s).
-    const timer = setTimeout(()=>{
-      setOrgName(searchString);
-    }, 500);
-    return ()=>{
-      clearTimeout(timer);
-    };
-  }, [searchString]);
-
-  const handleSearchValueChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
-    setSearchString(e.target.value);
-  };
-  const handleRepoTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRepoType(e.target.value);
-  };
-  const handleSortTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortType(e.target.value);
-  };
-  const handleDirectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setDirection(e.target.value);
+  const handleSearchFormDataChange = (data: ISearchQueryData)=> {
+    setSearchQuery({
+      ...searchQuery,
+      ...data,
+    });
   };
   const handleLastCardIntoScreen = () => {
-    setIsTryingLoodMore(true);
+    setIsTryingLoadMore(true);
   };
 
   return (
-    <div>
-      <form>
-        <input value={searchString} onChange={handleSearchValueChange}></input>
-        <select value={repoType} onChange={handleRepoTypeChange}>
-          {
-            Object.values(OrganizationAPI.RepoType).map((value, index)=>(
-              <option key={index} value={value}>{value}</option>
-            ))
-          }
-        </select>
-        <select value={sortType} onChange={handleSortTypeChange}>
-          {
-            Object.values(OrganizationAPI.SortType).map((value, index)=>(
-              <option key={index} value={value}>{value}</option>
-            ))
-          }
-        </select>
-        <select value={direction} onChange={handleDirectionChange}>
-          {
-            Object.values(OrganizationAPI.Direction).map((value, index)=>(
-              <option key={index} value={value}>{value}</option>
-            ))
-          }
-        </select>
-      </form>
+    <Container>
+      <div>
+        <Typography variant='h3'>
+            github-organization-repo-viewer
+        </Typography>
+      </div>
+      <SearchForm
+        orgName={searchQuery.orgName}
+        repoType={searchQuery.repoType}
+        sortType={searchQuery.sortType}
+        direction={searchQuery.direction}
+        onOrgNameChange={(value)=>handleSearchFormDataChange({orgName: value})}
+        onRepoTypeChange={(value)=>handleSearchFormDataChange({repoType: value})}
+        onSortTypeChange={(value)=>handleSearchFormDataChange({sortType: value})}
+        onDirectionChange={(value)=>handleSearchFormDataChange({direction: value})}
+      />
       <div>
         <IF condition={repoListData!==undefined}>
           <RepositoryCardList repoListData={repoListData} onLastCardIntoScreen={handleLastCardIntoScreen}/>
         </IF>
+        {/** If has errorMessage, show it on screen. */}
         <IF condition={errorMessage!==undefined}>
-          <h3>{errorMessage}</h3>
+          <Typography variant='h5'>
+            {errorMessage}
+          </Typography>
         </IF>
+        {/** If has repoListData and no more data need fetch, show the following message. */}
+        <IF condition={repoListData&&repoListData.length>0&&!isOrgHasMoreRepo}>
+          <Typography variant='h5'>
+              All matched repositories are here.
+          </Typography>
+        </IF>
+        {/** Space for loading progress */}
+        <div style={{
+          height: '50px',
+        }}>
+          <IF condition={isDataFetching}>
+            <CircularProgress/>
+          </IF>
+        </div>
       </div>
-    </div>
+    </Container>
   );
 };
 
 export default Organization;
+
+const SearchForm: React.FC<ISearchFormProps> = (props) => {
+  const [searchQuery, setSearchString] = useState<string>(DEFAULT_SEARCH_ORG_NAME);
+
+  const {orgName, repoType, sortType, direction,
+    onOrgNameChange, onRepoTypeChange, onSortTypeChange, onDirectionChange} = props;
+
+  /** Effect for update org name. */
+  useEffect(()=>{
+    // Update org name after typing (delay 0.5s).
+    const timer = setTimeout(()=>{
+      if (orgName !== searchQuery) {
+        onOrgNameChange(searchQuery);
+      }
+    }, 500);
+    return ()=>{
+      clearTimeout(timer);
+    };
+  // Only update org name when searchQuery changed.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  const handleSearchValueChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
+    setSearchString(e.target.value);
+  };
+  const handleRepoTypeChange = (option: string) => {
+    onRepoTypeChange(option);
+  };
+  const handleSortTypeChange = (option: string) => {
+    onSortTypeChange(option);
+  };
+  const handleDirectionChange = (option: string) => {
+    onDirectionChange(option);
+  };
+
+  return (
+    <form style={{
+      marginBlock: '12px',
+    }}>
+      <TextField value={searchQuery} onChange={handleSearchValueChange} label='Organization name'/>
+      <SelectWithLabel
+        options={Object.values(OrganizationAPI.RepoType)}
+        currentOption={repoType}
+        label='Type'
+        labelId={'type-select-label'}
+        onOptionChange={handleRepoTypeChange}
+        style={{
+          minWidth: '120px',
+        }}
+      />
+      <SelectWithLabel
+        options={Object.values(OrganizationAPI.SortType)}
+        currentOption={sortType}
+        label='Sort'
+        labelId={'sort-select-label'}
+        onOptionChange={handleSortTypeChange}
+        style={{
+          minWidth: '120px',
+        }}
+      />
+      <SelectWithLabel
+        options={Object.values(OrganizationAPI.Direction)}
+        currentOption={direction}
+        label='Direction'
+        labelId={'direction-select-label'}
+        onOptionChange={handleDirectionChange}
+        style={{
+          minWidth: '120px',
+        }}
+      />
+    </form>
+  );
+};
+
+interface ISearchFormProps {
+  orgName: string;
+  repoType: string;
+  sortType: string;
+  direction: string;
+  onOrgNameChange(value: string): void;
+  onRepoTypeChange(value: string): void;
+  onSortTypeChange(value: string): void;
+  onDirectionChange(value: string): void;
+}

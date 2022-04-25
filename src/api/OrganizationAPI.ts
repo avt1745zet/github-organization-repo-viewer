@@ -1,6 +1,12 @@
 
 
-// eslint-disable-next-line require-jsdoc
+/**
+ * Get github organization repository data.
+ * API reference: https://docs.github.com/en/rest/repos/repos#list-organization-repositories
+ * @param {string} orgName Organization name.
+ * @param {IGetRepoParam} param API parameters.
+ * @return {Promise<Response>}
+ */
 export async function getRepos(orgName: string, param?: IGetRepoParam): Promise<Response> {
   return await fetch(`https://api.github.com/orgs/${orgName}/repos?` + new URLSearchParams({
     ...param && param.type !== undefined ? {type: param.type} : {},
