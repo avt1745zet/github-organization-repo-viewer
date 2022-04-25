@@ -1,10 +1,19 @@
 import * as React from 'react';
-import {FC} from 'react';
+import {createTheme, CssBaseline, ThemeProvider} from '@mui/material';
 import Organization from './pages/organization';
 
-const App: FC = () => {
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+});
+
+const App: React.FC = () => {
   return (
-    <Organization/>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline/>
+      <Organization/>
+    </ThemeProvider>
   );
 };
 

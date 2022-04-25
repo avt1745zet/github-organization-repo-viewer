@@ -1,7 +1,8 @@
 import * as React from 'react';
 import {useEffect, useRef} from 'react';
-import IF from './../../../components/IF';
+import {Typography} from '@mui/material';
 import {IRepositoryData} from './../../../interfaces/repository';
+import IF from './../../../components/IF';
 import RepositoryCard from './RepositoryCard';
 
 const RepositoryCardList: React.FC<IRepositoryCardListProps> = (props) => {
@@ -23,7 +24,7 @@ const RepositoryCardList: React.FC<IRepositoryCardListProps> = (props) => {
       };
 
       const observer: IntersectionObserver = new IntersectionObserver(observerCallback, observerOptions);
-      const lastRepoCardElement = lastRepoCard.current;
+      const lastRepoCardElement: HTMLDivElement = lastRepoCard.current;
       if (lastRepoCardElement) {
         observer.observe(lastRepoCardElement);
       }
@@ -64,9 +65,9 @@ const RepositoryCardList: React.FC<IRepositoryCardListProps> = (props) => {
 
 const EmptyMessage = () => {
   return (
-    <h3>
-        This organization doesn’t have any repositories that match.
-    </h3>
+    <Typography variant='h5'>
+      This organization doesn’t have any repositories that match.
+    </Typography>
   );
 };
 
