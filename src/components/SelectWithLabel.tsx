@@ -27,7 +27,11 @@ const SelectWithLabel: React.FC<ISelectWithLabelProps> = (props) => {
   );
 };
 
-export default SelectWithLabel;
+const areEqual = (prevProps: Readonly<ISelectWithLabelProps>, nextProps: Readonly<ISelectWithLabelProps>) => {
+  return prevProps.currentOption === nextProps.currentOption;
+};
+
+export default React.memo(SelectWithLabel, areEqual);
 
 export interface ISelectWithLabelProps {
     options: Array<string>;
