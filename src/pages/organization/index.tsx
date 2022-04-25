@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useEffect, useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import {CircularProgress, Container, TextField, Typography} from '@mui/material';
 import * as OrganizationAPI from './../../api/OrganizationAPI';
 import {IRepositoryData} from './../../interfaces/repository';
@@ -124,12 +124,29 @@ const Organization: React.FC = () => {
     } as IRepositoryData));
   };
 
-  const handleSearchFormDataChange = (data: ISearchQueryData)=> {
+  const handleSearchFormDataChange = useCallback((data: ISearchQueryData)=>{
     setSearchQuery({
       ...searchQuery,
       ...data,
     });
-  };
+  }, [searchQuery]);
+
+  const handleOrgNameChange = useCallback((value: string)=>{
+    handleSearchFormDataChange({orgName: value});
+  }, [handleSearchFormDataChange]);
+
+  const handleRepoTypeChange = useCallback((value: string)=>{
+    handleSearchFormDataChange({repoType: value});
+  }, [handleSearchFormDataChange]);
+
+  const handleSortTypeChange = useCallback((value: string)=>{
+    handleSearchFormDataChange({sortType: value});
+  }, [handleSearchFormDataChange]);
+
+  const handleDirectionChange = useCallback((value: string)=>{
+    handleSearchFormDataChange({direction: value});
+  }, [handleSearchFormDataChange]);
+
   const handleLastCardIntoScreen = () => {
     setIsTryingLoadMore(true);
   };
@@ -146,10 +163,10 @@ const Organization: React.FC = () => {
         repoType={searchQuery.repoType}
         sortType={searchQuery.sortType}
         direction={searchQuery.direction}
-        onOrgNameChange={(value)=>handleSearchFormDataChange({orgName: value})}
-        onRepoTypeChange={(value)=>handleSearchFormDataChange({repoType: value})}
-        onSortTypeChange={(value)=>handleSearchFormDataChange({sortType: value})}
-        onDirectionChange={(value)=>handleSearchFormDataChange({direction: value})}
+        onOrgNameChange={handleOrgNameChange}
+        onRepoTypeChange={handleRepoTypeChange}
+        onSortTypeChange={handleSortTypeChange}
+        onDirectionChange={handleDirectionChange}
       />
       <div>
         <IF condition={repoListData!==undefined}>
@@ -206,15 +223,15 @@ const SearchForm: React.FC<ISearchFormProps> = (props) => {
   const handleSearchValueChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
     setSearchString(e.target.value);
   };
-  const handleRepoTypeChange = (option: string) => {
+  const handleRepoTypeChange = useCallback((option: string) => {
     onRepoTypeChange(option);
-  };
-  const handleSortTypeChange = (option: string) => {
+  }, [onRepoTypeChange]);
+  const handleSortTypeChange = useCallback((option: string) => {
     onSortTypeChange(option);
-  };
-  const handleDirectionChange = (option: string) => {
+  }, [onSortTypeChange]);
+  const handleDirectionChange = useCallback((option: string) => {
     onDirectionChange(option);
-  };
+  }, [onDirectionChange]);
 
   return (
     <form style={{
