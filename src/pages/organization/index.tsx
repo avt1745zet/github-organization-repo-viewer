@@ -155,12 +155,22 @@ const Organization: React.FC = () => {
         <IF condition={repoListData!==undefined}>
           <RepositoryCardList repoListData={repoListData} onLastCardIntoScreen={handleLastCardIntoScreen}/>
         </IF>
+        {/** If has errorMessage, show it on screen. */}
         <IF condition={errorMessage!==undefined}>
           <Typography variant='h5'>
             {errorMessage}
           </Typography>
         </IF>
-        <div>
+        {/** If has repoListData and no more data need fetch, show the following message. */}
+        <IF condition={repoListData&&repoListData.length>0&&!isOrgHasMoreRepo}>
+          <Typography variant='h5'>
+              All matched repositories are here.
+          </Typography>
+        </IF>
+        {/** Space for loading progress */}
+        <div style={{
+          height: '50px',
+        }}>
           <IF condition={isDataFetching}>
             <CircularProgress/>
           </IF>
