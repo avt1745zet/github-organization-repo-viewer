@@ -1,6 +1,6 @@
 {
   "name": "github-organization-repo-viewer",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "A react and Github REST API practice.",
   "main": "./src/index.tsx",
   "scripts": {
